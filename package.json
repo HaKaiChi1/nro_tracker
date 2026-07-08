@@ -1,0 +1,34 @@
+{
+  "name": "nro-track-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Web dashboard thong ke thong bao Ngoc Rong Online (NRO Track)",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "crawl": "tsx scripts/crawl.ts",
+    "watch": "tsx scripts/watch.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "next": "^15.1.6",
+    "next-themes": "^0.4.4",
+    "nodemailer": "^6.9.16",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^2.15.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.7",
+    "@types/nodemailer": "^6.4.17",
+    "@types/react": "^19.0.7",
+    "@types/react-dom": "^19.0.3",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}
