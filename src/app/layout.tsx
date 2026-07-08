@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { ServerProvider } from "@/lib/server-context";
 import { Nav } from "@/components/Nav";
 import "./globals.css";
 
@@ -13,8 +14,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="vi" suppressHydrationWarning>
       <body>
         <ThemeProvider>
-          <Nav />
-          <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
+          <ServerProvider>
+            <Nav />
+            <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
+          </ServerProvider>
         </ThemeProvider>
       </body>
     </html>

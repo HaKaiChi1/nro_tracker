@@ -1,9 +1,11 @@
 import Link from "next/link";
-import type { RecentFeed } from "@/lib/statistics";
+import type { NotificationRow } from "@/lib/types";
 import { buildPageWindow } from "@/lib/pagination";
 import { formatDateVi, timeAgoVi } from "@/lib/time";
 
-function SystemCard({ item }: { item: RecentFeed["rows"][number] }) {
+type FeedItem = Pick<NotificationRow, "id" | "time" | "value" | "player_name" | "item_name">;
+
+function SystemCard({ item }: { item: FeedItem }) {
   return (
     <div className="flex flex-col gap-1 px-4 py-3">
       <p className="font-medium">{item.value}</p>
@@ -21,7 +23,7 @@ export function SystemFeedPanel({
   pageSize,
   buildHref,
 }: {
-  items: RecentFeed["rows"];
+  items: FeedItem[];
   total: number;
   page: number;
   pageSize: number;

@@ -1,22 +1,32 @@
+"use client";
+
+import { Suspense } from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { playerTimeline } from "@/lib/statistics";
-import { getSelectedServer } from "@/lib/server-selection";
+import { useSearchParams } from "next/navigation";
+import { playerTimeline, sortNewestFirst } from "@/lib/stats-client";
+import { useServerData } from "@/lib/use-server-data";
 
-export const dynamic = "force-dynamic";
+function PlayerContent() {
+  const searchParams = useSearchParams();
+  const playerName = (searchParams.get("name") ?? "").trim();
 
-export default async function PlayerPage({
-  params,
-}: {
-  params: Promise<{ name: string }>;
-}) {
-  const { name } = await params;
-  const playerName = decodeURIComponent(name);
-  const server = await getSelectedServer();
-  const rows = playerTimeline(playerName, server);
+  const { rows: rawRows, loading } = useServerData();
+  const rows = playerTimeline(sortNewestFirst(rawRows), playerName);
+
+  if (!playerName || (rows.length === 0 && !loading)) {
+    return (
+      <div className="card px-4 py-8 text-center text-slate-400">
+        Không tìm thấy dữ liệu cho người chơi này.{" "}
+        <Link href="/search" className="underline">
+          Quay lại trang Tìm kiếm
+        </Link>
+        .
+      </div>
+    );
+  }
 
   if (rows.length === 0) {
-    notFound();
+    return <div className="card px-4 py-8 text-center text-slate-400">Đang tải dữ liệu...</div>;
   }
 
   const timeline = [...rows].reverse().slice(0, 200);
@@ -54,5 +64,13 @@ export default async function PlayerPage({
         </p>
       )}
     </div>
+  );
+}
+
+export default function PlayerPage() {
+  return (
+    <Suspense>
+      <PlayerContent />
+    </Suspense>
   );
 }

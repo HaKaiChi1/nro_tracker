@@ -3,5 +3,10 @@ node_modules
 out
 data/*.db
 data/*.db-journal
+data/*.db-shm
+data/*.db-wal
 .env
 *.log
+data/*.ndjson
+public/data/
+tsconfig.tsbuildinfo

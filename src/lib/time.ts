@@ -25,7 +25,7 @@ export function timeAgoVi(time: string): string {
 }
 
 export function formatPollAgo(lastPollAt: string | null): string {
-  if (!lastPollAt) return " — worker chưa chạy lần nào";
+  if (!lastPollAt) return " — đang tải dữ liệu...";
 
   const seconds = Math.max(0, Math.round((Date.now() - new Date(lastPollAt).getTime()) / 1000));
 

@@ -8,8 +8,6 @@ function bool(value: string | undefined, fallback: boolean): boolean {
   return value === "true" || value === "1";
 }
 
-export const SERVER_COOKIE = "nro_server";
-
 export const config = {
   dbPath: process.env.NRO_DB_PATH ?? "./data/nro.db",
   server: process.env.NRO_SERVER ?? "Super 1",

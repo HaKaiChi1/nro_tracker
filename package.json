@@ -8,8 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "crawl": "tsx scripts/crawl.ts",
-    "watch": "tsx scripts/watch.ts"
+    "update": "tsx scripts/update.ts",
+    "migrate": "tsx scripts/migrate-db.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.7",

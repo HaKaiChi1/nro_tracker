@@ -1,10 +1,11 @@
-import { AutoRefresh } from "@/components/AutoRefresh";
+"use client";
+
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { AutoUpdateBadge } from "@/components/AutoUpdateBadge";
 import { SystemFeedPanel } from "@/components/SystemFeedPanel";
-import { recentNotifications, summary } from "@/lib/statistics";
-import { getSelectedServer } from "@/lib/server-selection";
-
-export const dynamic = "force-dynamic";
+import { paginate, sortNewestFirst } from "@/lib/stats-client";
+import { useServerData } from "@/lib/use-server-data";
 
 const FEED_PAGE_SIZE = 10;
 
@@ -12,39 +13,45 @@ function buildFeedHref(page: number): string {
   return page > 1 ? `/?feedPage=${page}` : "/";
 }
 
-export default async function HomePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ feedPage?: string }>;
-}) {
-  const params = await searchParams;
-  const feedPage = Math.max(1, Number(params.feedPage) || 1);
+function HomeContent() {
+  const searchParams = useSearchParams();
+  const feedPage = Math.max(1, Number(searchParams.get("feedPage")) || 1);
 
-  const server = await getSelectedServer();
-  const stats = summary(server);
-  const feed = recentNotifications(server, feedPage, FEED_PAGE_SIZE);
+  const { server, rows, generatedAt, loading } = useServerData();
+  const sorted = sortNewestFirst(rows);
+  const feedRows = paginate(sorted, feedPage, FEED_PAGE_SIZE);
 
   return (
     <div className="flex flex-col gap-6">
-      <AutoRefresh intervalSeconds={5} />
-
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-2xl font-bold">Tổng quan — {server}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Luồng thông báo trực tiếp từ service.dungpham.com.vn
+            Luồng thông báo thu thập từ service.dungpham.com.vn
           </p>
         </div>
-        <AutoUpdateBadge lastPollAt={stats.lastPollAt} />
+        <AutoUpdateBadge lastPollAt={generatedAt} />
       </div>
 
-      <SystemFeedPanel
-        items={feed.rows}
-        total={feed.total}
-        page={feedPage}
-        pageSize={FEED_PAGE_SIZE}
-        buildHref={buildFeedHref}
-      />
+      {loading && rows.length === 0 ? (
+        <div className="card px-4 py-8 text-center text-slate-400">Đang tải dữ liệu...</div>
+      ) : (
+        <SystemFeedPanel
+          items={feedRows}
+          total={sorted.length}
+          page={feedPage}
+          pageSize={FEED_PAGE_SIZE}
+          buildHref={buildFeedHref}
+        />
+      )}
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense>
+      <HomeContent />
+    </Suspense>
   );
 }

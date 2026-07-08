@@ -1,6 +1,6 @@
 import nodemailer, { type Transporter } from "nodemailer";
 import { config } from "./config";
-import type { MailRule, NotificationRow } from "./db";
+import type { AlertRule, NotificationRow } from "./types";
 
 export const DEFAULT_SUBJECT = "[NRO TRACKER] THÔNG BÁO";
 
@@ -42,7 +42,7 @@ function formatDateTime(time: string): { niceDate: string; niceTime: string } {
   return { niceDate: `${d}/${m}/${y}`, niceTime: timePart ?? "" };
 }
 
-export async function sendRuleAlertEmail(rule: MailRule, record: NotificationRow): Promise<void> {
+export async function sendRuleAlertEmail(rule: AlertRule, record: NotificationRow): Promise<void> {
   const mailer = getTransporter();
   if (!mailer) return;
 

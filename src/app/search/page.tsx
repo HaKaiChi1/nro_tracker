@@ -1,10 +1,12 @@
+"use client";
+
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { searchDailyDistribution, searchNotifications } from "@/lib/statistics";
-import { getSelectedServer } from "@/lib/server-selection";
+import { useRouter, useSearchParams } from "next/navigation";
+import { paginate, searchDailyDistribution, searchNotifications, sortNewestFirst } from "@/lib/stats-client";
+import { useServerData } from "@/lib/use-server-data";
 import { VerticalBarChart } from "@/components/charts/VerticalBarChart";
 import { ChartCard } from "@/components/ChartCard";
-
-export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 25;
 
@@ -17,23 +19,20 @@ function buildHref(q: string, page: number, view: string) {
   return qs ? `/search?${qs}` : "/search";
 }
 
-export default async function SearchPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string; page?: string; view?: string }>;
-}) {
-  const params = await searchParams;
-  const q = (params.q ?? "").trim();
-  const page = Math.max(1, Number(params.page) || 1);
-  const view = params.view === "chart" ? "chart" : "table";
+function SearchContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const q = (searchParams.get("q") ?? "").trim();
+  const page = Math.max(1, Number(searchParams.get("page")) || 1);
+  const view = searchParams.get("view") === "chart" ? "chart" : "table";
 
-  const server = await getSelectedServer();
+  const [input, setInput] = useState(q);
+  const { rows: rawRows } = useServerData();
 
-  const { rows, total } = q
-    ? searchNotifications(q, server, page, PAGE_SIZE)
-    : { rows: [], total: 0 };
-
-  const daily = q && view === "chart" ? searchDailyDistribution(q, server) : [];
+  const allMatches = q ? searchNotifications(sortNewestFirst(rawRows), q) : [];
+  const total = allMatches.length;
+  const rows = paginate(allMatches, page, PAGE_SIZE);
+  const daily = q && view === "chart" ? searchDailyDistribution(rawRows, q) : [];
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -41,15 +40,21 @@ export default async function SearchPage({
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-bold">Tìm kiếm theo tên người chơi</h1>
 
-      <form className="flex gap-2" action="/search">
+      <form
+        className="flex gap-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          router.push(buildHref(input.trim(), 1, view));
+        }}
+      >
         <input
           type="text"
           name="q"
-          defaultValue={q}
+          value={input}
+          onChange={(event) => setInput(event.target.value)}
           placeholder="Nhập tên nhân vật, ví dụ: kakapote"
           className="w-full max-w-sm rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-900"
         />
-        {view === "chart" && <input type="hidden" name="view" value="chart" />}
         <button type="submit" className="btn-primary">
           Tìm
         </button>
@@ -110,7 +115,7 @@ export default async function SearchPage({
               <tr key={row.id} className="border-b border-slate-100 last:border-0 dark:border-slate-800">
                 <td className="whitespace-nowrap px-4 py-2 text-slate-500 dark:text-slate-400">{row.time}</td>
                 <td className="px-4 py-2 font-medium">
-                  <Link href={`/players/${encodeURIComponent(row.player_name ?? "")}`} className="hover:underline">
+                  <Link href={`/players?name=${encodeURIComponent(row.player_name ?? "")}`} className="hover:underline">
                     {row.player_name}
                   </Link>
                 </td>
@@ -161,5 +166,13 @@ export default async function SearchPage({
       </>
       )}
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense>
+      <SearchContent />
+    </Suspense>
   );
 }

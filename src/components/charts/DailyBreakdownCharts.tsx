@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChartCard } from "@/components/ChartCard";
 import { HorizontalBarChart } from "./HorizontalBarChart";
 import { VerticalBarChart } from "./VerticalBarChart";
-import type { HourlyPoint, NamedCount } from "@/lib/statistics";
+import type { HourlyPoint, NamedCount } from "@/lib/stats-client";
 
 export interface DayStats {
   date: string; // YYYY-MM-DD

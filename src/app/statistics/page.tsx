@@ -1,6 +1,7 @@
+"use client";
+
 import Link from "next/link";
 import { SummaryCard } from "@/components/SummaryCard";
-import { AutoRefresh } from "@/components/AutoRefresh";
 import { AutoUpdateBadge } from "@/components/AutoUpdateBadge";
 import { ChartCard } from "@/components/ChartCard";
 import { HorizontalBarChart } from "@/components/charts/HorizontalBarChart";
@@ -11,32 +12,33 @@ import {
   hourlyDistribution,
   hourlyDistributionForDate,
   recentDates,
+  sortNewestFirst,
   summary,
   topItems,
   topPlayers,
   topPlayersForDate,
-} from "@/lib/statistics";
-import { getSelectedServer } from "@/lib/server-selection";
+} from "@/lib/stats-client";
+import { useServerData } from "@/lib/use-server-data";
+import { withBase } from "@/lib/base-path";
+import { serverSlug } from "@/lib/types";
 
-export const dynamic = "force-dynamic";
+export default function StatisticsPage() {
+  const { server, rows: rawRows, generatedAt } = useServerData();
+  const rows = sortNewestFirst(rawRows);
 
-export default async function StatisticsPage() {
-  const server = await getSelectedServer();
-  const stats = summary(server);
-  const players = topPlayers(server, 10);
-  const items = topItems(server, 10);
-  const hourly = hourlyDistribution(server);
-  const daily = dailyDistribution(server).slice(-30);
-  const days = recentDates(server, 4).map((date) => ({
+  const stats = summary(rows);
+  const players = topPlayers(rows, 10);
+  const items = topItems(rows, 10);
+  const hourly = hourlyDistribution(rows);
+  const daily = dailyDistribution(rows).slice(-30);
+  const days = recentDates(rows, 4).map((date) => ({
     date,
-    hourly: hourlyDistributionForDate(server, date),
-    players: topPlayersForDate(server, date, 10),
+    hourly: hourlyDistributionForDate(rows, date),
+    players: topPlayersForDate(rows, date, 10),
   }));
 
   return (
     <div className="flex flex-col gap-6">
-      <AutoRefresh intervalSeconds={5} />
-
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-2xl font-bold">Thống kê — {server}</h1>
@@ -45,8 +47,8 @@ export default async function StatisticsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <AutoUpdateBadge lastPollAt={stats.lastPollAt} />
-          <a href="/api/export" className="btn-outline">
+          <AutoUpdateBadge lastPollAt={generatedAt} />
+          <a href={withBase(`/data/${serverSlug(server)}.csv`)} download className="btn-outline">
             ⬇️ Xuất CSV
           </a>
         </div>

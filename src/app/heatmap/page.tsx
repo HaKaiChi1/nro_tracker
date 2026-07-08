@@ -1,13 +1,13 @@
+"use client";
+
 import { ChartCard } from "@/components/ChartCard";
 import { Heatmap } from "@/components/charts/Heatmap";
-import { heatmap } from "@/lib/statistics";
-import { getSelectedServer } from "@/lib/server-selection";
+import { heatmap } from "@/lib/stats-client";
+import { useServerData } from "@/lib/use-server-data";
 
-export const dynamic = "force-dynamic";
-
-export default async function HeatmapPage() {
-  const server = await getSelectedServer();
-  const cells = heatmap(server);
+export default function HeatmapPage() {
+  const { server, rows } = useServerData();
+  const cells = heatmap(rows);
 
   return (
     <div className="flex flex-col gap-4">

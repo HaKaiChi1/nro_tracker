@@ -1,5 +1,5 @@
-import type { HeatmapCell } from "@/lib/statistics";
-import { DOW_LABELS } from "@/lib/statistics";
+import type { HeatmapCell } from "@/lib/stats-client";
+import { DOW_LABELS } from "@/lib/stats-client";
 
 function colorFor(value: number, max: number): string {
   if (max === 0 || value === 0) return "rgb(226 232 240 / 0.4)";

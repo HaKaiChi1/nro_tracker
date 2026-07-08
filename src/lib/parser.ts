@@ -1,4 +1,4 @@
-import type { NotificationRow } from "./db";
+import type { NotificationRow } from "./types";
 
 const PLAYER_PATTERN = /^(\S+)\s+vừa/i;
 const SET_PATTERN = /(Set\s+[A-Za-zÀ-ỹ0-9\s]+)/i;

@@ -1,6 +1,6 @@
 import { config } from "./config";
 import { parseResponse, type RawNotification } from "./parser";
-import type { NotificationRow } from "./db";
+import type { NotificationRow } from "./types";
 
 type ProgressCallback = (page: number, totalPages: number) => void;
 

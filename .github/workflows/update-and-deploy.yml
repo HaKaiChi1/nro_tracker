@@ -1,0 +1,102 @@
+# Cập nhật dữ liệu + deploy GitHub Pages.
+#
+# - Chạy theo lịch mỗi 10 phút (GitHub có thể trễ hơn), khi push lên main,
+#   hoặc bấm tay từ tab Actions (workflow_dispatch).
+# - Dữ liệu (data/*.ndjson) được lưu trên nhánh `data` — force-push mỗi lần
+#   thành đúng 1 commit để repo không phình to.
+name: Update data & deploy Pages
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: update-and-deploy
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Khôi phục dữ liệu từ nhánh data
+        run: |
+          status=0
+          git ls-remote --exit-code --heads origin data >/dev/null || status=$?
+          if [ "$status" -eq 0 ]; then
+            git fetch origin data --depth 1
+            git checkout FETCH_HEAD -- data/
+            echo "Đã khôi phục $(ls data/*.ndjson | wc -l) file dữ liệu."
+          elif [ "$status" -eq 2 ]; then
+            echo "Chưa có nhánh data — lần chạy đầu sẽ crawl toàn bộ lịch sử."
+          else
+            echo "Không kiểm tra được nhánh data (lỗi mạng?), dừng để tránh crawl lại từ đầu." >&2
+            exit 1
+          fi
+
+      - name: Crawl dữ liệu mới + gửi cảnh báo + xuất JSON tĩnh
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_SECURE: ${{ secrets.SMTP_SECURE }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+        run: npx tsx scripts/update.ts
+
+      - name: Đẩy dữ liệu lên nhánh data (1 commit duy nhất)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          if ! ls data/*.ndjson >/dev/null 2>&1; then
+            echo "Không có file dữ liệu nào — bỏ qua bước đẩy nhánh data."
+            exit 0
+          fi
+          DIR="$(mktemp -d)"
+          git -C "$DIR" init -q -b data
+          mkdir -p "$DIR/data"
+          cp data/*.ndjson "$DIR/data/"
+          git -C "$DIR" add -A
+          git -C "$DIR" \
+            -c user.name="github-actions[bot]" \
+            -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -qm "data snapshot $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git -C "$DIR" push -qf \
+            "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" data
+
+      - name: Build site tĩnh
+        run: |
+          export NEXT_PUBLIC_BASE_PATH="/${GITHUB_REPOSITORY#*/}"
+          export NEXT_PUBLIC_REPO_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
+          npm run build
+          touch out/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
