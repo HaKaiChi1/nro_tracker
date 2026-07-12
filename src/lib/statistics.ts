@@ -23,12 +23,6 @@ export interface DailyPoint {
   drops: number;
 }
 
-export interface HeatmapCell {
-  dow: number; // 0 = Sunday ... 6 = Saturday
-  hour: number; // 0-23
-  drops: number;
-}
-
 export interface SearchResult {
   rows: Pick<
     NotificationRow,
@@ -173,32 +167,6 @@ export function dailyDistribution(server: string = config.server): DailyPoint[] 
   );
 }
 
-export function heatmap(server: string = config.server): HeatmapCell[] {
-  const rows = queryAll<HeatmapCell>(
-    `
-    SELECT
-      CAST(strftime('%w', time) AS INTEGER) AS dow,
-      CAST(strftime('%H', time) AS INTEGER) AS hour,
-      COUNT(*) AS drops
-    FROM notifications
-    WHERE server = ?
-    GROUP BY dow, hour
-    `,
-    server
-  );
-
-  const byKey = new Map(rows.map((r) => [`${r.dow}-${r.hour}`, r.drops]));
-
-  const cells: HeatmapCell[] = [];
-  for (let dow = 0; dow < 7; dow += 1) {
-    for (let hour = 0; hour < 24; hour += 1) {
-      cells.push({ dow, hour, drops: byKey.get(`${dow}-${hour}`) ?? 0 });
-    }
-  }
-
-  return cells;
-}
-
 export interface RecentFeed {
   rows: Pick<NotificationRow, "id" | "time" | "value" | "player_name" | "item_name">[];
   total: number;
@@ -277,6 +245,44 @@ export function searchDailyDistribution(
     `,
     server,
     like
+  );
+}
+
+export interface PlayerSummaryRow {
+  name: string;
+  drops: number;
+  firstDate: string;
+  totalDrops: number;
+}
+
+export function playersForDate(
+  server: string = config.server,
+  date: string
+): PlayerSummaryRow[] {
+  return queryAll<PlayerSummaryRow>(
+    `
+    SELECT
+      n.player_name AS name,
+      COUNT(*) AS drops,
+      (
+        SELECT MIN(substr(f.time, 1, 10))
+        FROM notifications f
+        WHERE f.server = n.server AND f.player_name = n.player_name
+      ) AS firstDate,
+      (
+        SELECT COUNT(*)
+        FROM notifications f
+        WHERE f.server = n.server AND f.player_name = n.player_name
+      ) AS totalDrops
+    FROM notifications n
+    WHERE n.server = ?
+      AND n.player_name IS NOT NULL AND n.player_name <> ''
+      AND substr(n.time, 1, 10) = ?
+    GROUP BY n.player_name
+    ORDER BY drops DESC
+    `,
+    server,
+    date
   );
 }
 

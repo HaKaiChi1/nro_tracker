@@ -7,7 +7,7 @@ const LINKS = [
   { href: "/", label: "Tổng quan" },
   { href: "/statistics", label: "Thống kê" },
   { href: "/search", label: "Tìm kiếm" },
-  { href: "/heatmap", label: "Heatmap" },
+  { href: "/players", label: "Người nhặt đồ" },
   { href: "/alerts", label: "Cảnh báo Email" },
 ];
 

@@ -79,9 +79,9 @@ export default async function StatisticsPage() {
       </div>
 
       <p className="text-center text-xs text-slate-400">
-        Xem chi tiết theo giờ × ngày trong tuần tại trang{" "}
-        <Link href="/heatmap" className="underline">
-          Heatmap
+        Xem danh sách toàn bộ người nhặt đồ tại trang{" "}
+        <Link href="/players" className="underline">
+          Người nhặt đồ
         </Link>{" "}
         hoặc tra cứu lịch sử một người chơi tại trang{" "}
         <Link href="/search" className="underline">
