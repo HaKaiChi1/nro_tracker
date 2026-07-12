@@ -1,16 +1,9 @@
 import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle";
 import { ServerSelect } from "./ServerSelect";
+import { NavLinks } from "./NavLinks";
 import { config } from "@/lib/config";
 import { getSelectedServer } from "@/lib/server-selection";
-
-const LINKS = [
-  { href: "/", label: "Tổng quan" },
-  { href: "/statistics", label: "Thống kê" },
-  { href: "/search", label: "Tìm kiếm" },
-  { href: "/heatmap", label: "Heatmap" },
-  { href: "/alerts", label: "Cảnh báo Email" },
-];
 
 export async function Nav() {
   const server = await getSelectedServer();
@@ -25,13 +18,7 @@ export async function Nav() {
           <ServerSelect servers={config.servers} current={server} />
         </div>
 
-        <nav className="flex items-center gap-1">
-          {LINKS.map((link) => (
-            <Link key={link.href} href={link.href} className="nav-link">
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+        <NavLinks />
 
         <ThemeToggle />
       </div>
