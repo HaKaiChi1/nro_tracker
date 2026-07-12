@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { VerticalBarChart } from "./charts/VerticalBarChart";
 
 interface TimelineRow {
   id: number;
@@ -13,6 +14,7 @@ export function PlayerDetailButton({ name }: { name: string }) {
   const [loading, setLoading] = useState(false);
   const [rows, setRows] = useState<TimelineRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState<"table" | "chart">("table");
 
   async function handleOpen() {
     setOpen(true);
@@ -35,6 +37,18 @@ export function PlayerDetailButton({ name }: { name: string }) {
   const timeline = rows ? [...rows].reverse().slice(0, 200) : [];
   const first = rows?.[0];
   const last = rows?.[rows.length - 1];
+
+  const daily = useMemo(() => {
+    if (!rows) return [];
+    const byDate = new Map<string, number>();
+    for (const row of rows) {
+      const date = row.time.slice(0, 10);
+      byDate.set(date, (byDate.get(date) ?? 0) + 1);
+    }
+    return Array.from(byDate, ([date, drops]) => ({ date, drops })).sort((a, b) =>
+      a.date.localeCompare(b.date)
+    );
+  }, [rows]);
 
   return (
     <>
@@ -62,14 +76,42 @@ export function PlayerDetailButton({ name }: { name: string }) {
                   </p>
                 )}
               </div>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="rounded-md px-2 py-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
-                aria-label="Đóng"
-              >
-                ✕
-              </button>
+              <div className="flex items-center gap-2">
+                {rows && rows.length > 0 && (
+                  <div className="flex gap-1 rounded-lg border border-slate-200 p-1 dark:border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => setView("table")}
+                      className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+                        view === "table"
+                          ? "bg-indigo-600 text-white"
+                          : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      📋 Bảng
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setView("chart")}
+                      className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+                        view === "chart"
+                          ? "bg-indigo-600 text-white"
+                          : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      📊 Biểu đồ
+                    </button>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="rounded-md px-2 py-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
+                  aria-label="Đóng"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             <div className="overflow-y-auto p-4">
@@ -80,7 +122,7 @@ export function PlayerDetailButton({ name }: { name: string }) {
                 <p className="text-sm text-slate-400">Không có dữ liệu.</p>
               )}
 
-              {rows && rows.length > 0 && (
+              {rows && rows.length > 0 && view === "table" && (
                 <ol className="divide-y divide-slate-100 dark:divide-slate-800">
                   {timeline.map((row) => (
                     <li
@@ -92,6 +134,10 @@ export function PlayerDetailButton({ name }: { name: string }) {
                     </li>
                   ))}
                 </ol>
+              )}
+
+              {rows && rows.length > 0 && view === "chart" && (
+                <VerticalBarChart data={daily} xKey="date" color="#6366f1" rotateLabels height={320} />
               )}
             </div>
           </div>
