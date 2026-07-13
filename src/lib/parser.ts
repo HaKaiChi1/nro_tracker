@@ -2,6 +2,7 @@ import type { NotificationRow } from "./db";
 
 const PLAYER_PATTERN = /^(\S+)\s+vừa/i;
 const SET_PATTERN = /(Set\s+[A-Za-zÀ-ỹ0-9\s]+)/i;
+const SYSTEM_TAG_PATTERN = /^\[HT\]\s*/i;
 
 export interface RawNotification {
   id: number;
@@ -29,6 +30,10 @@ export function fixText(text: string | null | undefined): string {
   return text;
 }
 
+export function stripSystemTag(text: string): string {
+  return text.replace(SYSTEM_TAG_PATTERN, "");
+}
+
 export function extractPlayer(value: string): string | null {
   const match = PLAYER_PATTERN.exec(fixText(value));
   return match ? match[1].trim() : null;
@@ -40,7 +45,7 @@ export function extractItem(value: string): string | null {
 }
 
 export function parseNotification(item: RawNotification): NotificationRow {
-  const value = fixText(item.value);
+  const value = stripSystemTag(fixText(item.value));
 
   return {
     id: item.id,
