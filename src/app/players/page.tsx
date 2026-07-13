@@ -5,6 +5,14 @@ import { PlayerDetailButton } from "@/components/PlayerDetailButton";
 
 export const dynamic = "force-dynamic";
 
+function daysSince(firstDate: string): number {
+  const [y, m, d] = firstDate.split("-").map(Number);
+  const first = Date.UTC(y, m - 1, d);
+  const now = new Date();
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return Math.max(1, Math.floor((today - first) / 86_400_000) + 1);
+}
+
 export default async function PlayersPage({
   searchParams,
 }: {
@@ -50,6 +58,7 @@ export default async function PlayersPage({
               <th className="px-4 py-3">Người chơi</th>
               <th className="px-4 py-3">Số lượng</th>
               <th className="px-4 py-3">Ngày đầu tiên</th>
+              <th className="px-4 py-3">TB/ngày</th>
             </tr>
           </thead>
           <tbody>
@@ -63,12 +72,17 @@ export default async function PlayersPage({
                 </td>
                 <td className="px-4 py-2">{row.drops.toLocaleString("vi-VN")}</td>
                 <td className="px-4 py-2 text-slate-500 dark:text-slate-400">{row.firstDate}</td>
+                <td className="px-4 py-2 text-slate-500 dark:text-slate-400">
+                  {(row.totalDrops / daysSince(row.firstDate)).toLocaleString("vi-VN", {
+                    maximumFractionDigits: 2,
+                  })}
+                </td>
               </tr>
             ))}
 
             {rows.length === 0 && (
               <tr>
-                <td colSpan={3} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={4} className="px-4 py-8 text-center text-slate-400">
                   Không có dữ liệu cho ngày này.
                 </td>
               </tr>
