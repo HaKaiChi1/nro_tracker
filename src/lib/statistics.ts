@@ -154,6 +154,57 @@ export function topPlayersForDate(server: string, date: string, limit = 10): Nam
   );
 }
 
+// Người chơi nhặt được đồ theo từng giờ trong ngày, dùng cho tooltip biểu đồ giờ.
+export function playersByHourForDate(
+  server: string,
+  date: string
+): Record<string, NamedCount[]> {
+  const rows = queryAll<{ hour: string; name: string; drops: number }>(
+    `
+    SELECT strftime('%H', time) AS hour, player_name AS name, COUNT(*) AS drops
+    FROM notifications
+    WHERE server = ?
+      AND substr(time, 1, 10) = ?
+      AND player_name IS NOT NULL AND player_name <> ''
+    GROUP BY hour, player_name
+    ORDER BY hour ASC, drops DESC
+    `,
+    server,
+    date
+  );
+
+  const byHour: Record<string, NamedCount[]> = {};
+  for (const row of rows) {
+    (byHour[row.hour] ??= []).push({ name: row.name, drops: row.drops });
+  }
+  return byHour;
+}
+
+// Các mốc giờ:phút:giây trong ngày mà mỗi người chơi nhặt được đồ, dùng cho tooltip top người chơi.
+export function dropTimesByPlayerForDate(
+  server: string,
+  date: string
+): Record<string, string[]> {
+  const rows = queryAll<{ name: string; time: string }>(
+    `
+    SELECT player_name AS name, time
+    FROM notifications
+    WHERE server = ?
+      AND substr(time, 1, 10) = ?
+      AND player_name IS NOT NULL AND player_name <> ''
+    ORDER BY player_name ASC, time ASC
+    `,
+    server,
+    date
+  );
+
+  const byPlayer: Record<string, string[]> = {};
+  for (const row of rows) {
+    (byPlayer[row.name] ??= []).push(row.time.slice(11));
+  }
+  return byPlayer;
+}
+
 export function dailyDistribution(server: string = config.server): DailyPoint[] {
   return queryAll<DailyPoint>(
     `

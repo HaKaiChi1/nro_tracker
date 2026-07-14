@@ -8,8 +8,10 @@ import { VerticalBarChart } from "@/components/charts/VerticalBarChart";
 import { DailyBreakdownCharts } from "@/components/charts/DailyBreakdownCharts";
 import {
   dailyDistribution,
+  dropTimesByPlayerForDate,
   hourlyDistribution,
   hourlyDistributionForDate,
+  playersByHourForDate,
   recentDates,
   summary,
   topItems,
@@ -31,6 +33,8 @@ export default async function StatisticsPage() {
     date,
     hourly: hourlyDistributionForDate(server, date),
     players: topPlayersForDate(server, date, 10),
+    hourlyPlayers: playersByHourForDate(server, date),
+    playerTimes: dropTimesByPlayerForDate(server, date),
   }));
 
   return (

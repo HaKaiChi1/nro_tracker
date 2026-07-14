@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import {
   Bar,
   BarChart,
@@ -18,6 +19,7 @@ export function VerticalBarChart<T extends object>({
   color = "#6366f1",
   height = 320,
   rotateLabels = false,
+  tooltipExtra,
 }: {
   data: T[];
   xKey: keyof T & string;
@@ -25,6 +27,7 @@ export function VerticalBarChart<T extends object>({
   color?: string;
   height?: number;
   rotateLabels?: boolean;
+  tooltipExtra?: (item: T) => ReactNode;
 }) {
   if (data.length === 0) {
     return <EmptyState />;
@@ -44,7 +47,17 @@ export function VerticalBarChart<T extends object>({
         />
         <YAxis stroke="#94a3b8" fontSize={12} allowDecimals={false} />
         <Tooltip
-          contentStyle={{ background: "#1e293b", border: "none", borderRadius: 8, color: "#fff" }}
+          content={({ active, payload }) => {
+            if (!active || !payload || payload.length === 0) return null;
+            const item = payload[0].payload as T;
+            return (
+              <div className="max-w-xs rounded-lg bg-slate-800 px-3 py-2 text-xs text-white shadow-lg">
+                <div className="font-medium">{String(item[xKey])}</div>
+                <div className="text-slate-300">drops : {String(item[yKey])}</div>
+                {tooltipExtra?.(item)}
+              </div>
+            );
+          }}
         />
         <Bar dataKey={yKey} fill={color} radius={[4, 4, 0, 0]} />
       </BarChart>

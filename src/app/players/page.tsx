@@ -62,23 +62,26 @@ export default async function PlayersPage({
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
-              <tr key={row.name} className="border-b border-slate-100 last:border-0 dark:border-slate-800">
-                <td className="px-4 py-2 font-medium">
-                  <PlayerDetailButton name={row.name} />{" "}
-                  <span className="font-normal text-slate-400">
-                    ({row.totalDrops.toLocaleString("vi-VN")})
-                  </span>
-                </td>
-                <td className="px-4 py-2">{row.drops.toLocaleString("vi-VN")}</td>
-                <td className="px-4 py-2 text-slate-500 dark:text-slate-400">{row.firstDate}</td>
-                <td className="px-4 py-2 text-slate-500 dark:text-slate-400">
-                  {(row.totalDrops / daysSince(row.firstDate)).toLocaleString("vi-VN", {
-                    maximumFractionDigits: 2,
-                  })}
-                </td>
-              </tr>
-            ))}
+            {rows.map((row) => {
+              const days = daysSince(row.firstDate);
+              return (
+                <tr key={row.name} className="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                  <td className="px-4 py-2 font-medium">
+                    <PlayerDetailButton name={row.name} />{" "}
+                    <span className="font-normal text-slate-400">
+                      ({row.totalDrops.toLocaleString("vi-VN")}/{days})
+                    </span>
+                  </td>
+                  <td className="px-4 py-2">{row.drops.toLocaleString("vi-VN")}</td>
+                  <td className="px-4 py-2 text-slate-500 dark:text-slate-400">{row.firstDate}</td>
+                  <td className="px-4 py-2 text-slate-500 dark:text-slate-400">
+                    {(row.totalDrops / days).toLocaleString("vi-VN", {
+                      maximumFractionDigits: 2,
+                    })}
+                  </td>
+                </tr>
+              );
+            })}
 
             {rows.length === 0 && (
               <tr>

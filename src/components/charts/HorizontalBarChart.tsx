@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import {
   Bar,
   BarChart,
@@ -17,10 +18,12 @@ export function HorizontalBarChart({
   data,
   color = "#6366f1",
   height = 320,
+  tooltipExtra,
 }: {
   data: { name: string; drops: number }[];
   color?: string;
   height?: number;
+  tooltipExtra?: (item: { name: string; drops: number }) => ReactNode;
 }) {
   if (data.length === 0) {
     return <EmptyState />;
@@ -40,7 +43,17 @@ export function HorizontalBarChart({
           tick={{ fill: "currentColor" }}
         />
         <Tooltip
-          contentStyle={{ background: "#1e293b", border: "none", borderRadius: 8, color: "#fff" }}
+          content={({ active, payload }) => {
+            if (!active || !payload || payload.length === 0) return null;
+            const item = payload[0].payload as { name: string; drops: number };
+            return (
+              <div className="max-h-64 max-w-xs overflow-y-auto rounded-lg bg-slate-800 px-3 py-2 text-xs text-white shadow-lg">
+                <div className="font-medium">{item.name}</div>
+                <div className="text-slate-300">drops : {item.drops}</div>
+                {tooltipExtra?.(item)}
+              </div>
+            );
+          }}
         />
         <Bar dataKey="drops" radius={[0, 4, 4, 0]}>
           {data.map((_, i) => (

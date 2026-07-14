@@ -10,6 +10,8 @@ export interface DayStats {
   date: string; // YYYY-MM-DD
   hourly: HourlyPoint[];
   players: NamedCount[];
+  hourlyPlayers: Record<string, NamedCount[]>;
+  playerTimes: Record<string, string[]>;
 }
 
 function formatDay(date: string): string {
@@ -60,7 +62,24 @@ export function DailyBreakdownCharts({ days }: { days: DayStats[] }) {
           )
         }
       >
-        <VerticalBarChart data={hourlyDay?.hourly ?? []} xKey="hour" color="#f59e0b" />
+        <VerticalBarChart
+          data={hourlyDay?.hourly ?? []}
+          xKey="hour"
+          color="#f59e0b"
+          tooltipExtra={(item) => {
+            const players = hourlyDay?.hourlyPlayers[item.hour] ?? [];
+            if (players.length === 0) return null;
+            return (
+              <ul className="mt-1 max-h-40 space-y-0.5 overflow-y-auto border-t border-slate-700 pt-1">
+                {players.map((p) => (
+                  <li key={p.name} className="text-slate-300">
+                    {p.name} ({p.drops})
+                  </li>
+                ))}
+              </ul>
+            );
+          }}
+        />
       </ChartCard>
 
       <ChartCard
@@ -71,7 +90,22 @@ export function DailyBreakdownCharts({ days }: { days: DayStats[] }) {
           )
         }
       >
-        <HorizontalBarChart data={playersDay?.players ?? []} />
+        <HorizontalBarChart
+          data={playersDay?.players ?? []}
+          tooltipExtra={(item) => {
+            const times = playersDay?.playerTimes[item.name] ?? [];
+            if (times.length === 0) return null;
+            return (
+              <ul className="mt-1 max-h-40 space-y-0.5 overflow-y-auto border-t border-slate-700 pt-1">
+                {times.map((t) => (
+                  <li key={t} className="text-slate-300">
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            );
+          }}
+        />
       </ChartCard>
     </>
   );
