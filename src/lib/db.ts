@@ -80,6 +80,19 @@ function createConnection(): DatabaseSync {
   ensureColumn(db, "mail_rules", "enabled", "INTEGER NOT NULL DEFAULT 1");
   ensureColumn(db, "mail_rules", "server", "TEXT NOT NULL DEFAULT 'Super 1'");
 
+  // Web dungpham đôi khi phát cùng một thông báo nhiều lần với id khác nhau
+  // (cùng server + time + value). Dọn các bản ghi trùng còn sót lại từ trước,
+  // rồi thêm ràng buộc UNIQUE để INSERT OR IGNORE tự chặn trùng lặp mới.
+  db.exec(`
+    DELETE FROM notifications
+    WHERE id NOT IN (
+      SELECT MIN(id) FROM notifications GROUP BY server, time, value
+    )
+  `);
+  db.exec(
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_dedup ON notifications(server, time, value)`
+  );
+
   return db;
 }
 

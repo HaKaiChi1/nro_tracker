@@ -84,6 +84,38 @@ export function topItems(
   );
 }
 
+// Với mỗi người chơi, lấy số đồ nhặt được nhiều nhất trong 1 ngày bất kỳ,
+// chỉ xét trong `days` ngày gần nhất — dùng để tìm ai "cày" mạnh nhất.
+export function topPlayersByBestDay(
+  server: string = config.server,
+  days = 45,
+  limit = 10
+): NamedCount[] {
+  const cutoff = new Date();
+  cutoff.setUTCDate(cutoff.getUTCDate() - (days - 1));
+  const cutoffDate = cutoff.toISOString().slice(0, 10);
+
+  return queryAll<NamedCount>(
+    `
+    SELECT name, MAX(drops) AS drops
+    FROM (
+      SELECT player_name AS name, substr(time, 1, 10) AS day, COUNT(*) AS drops
+      FROM notifications
+      WHERE server = ?
+        AND player_name IS NOT NULL AND player_name <> ''
+        AND substr(time, 1, 10) >= ?
+      GROUP BY player_name, day
+    )
+    GROUP BY name
+    ORDER BY drops DESC
+    LIMIT ?
+    `,
+    server,
+    cutoffDate,
+    limit
+  );
+}
+
 export function hourlyDistribution(server: string = config.server): HourlyPoint[] {
   const rows = queryAll<{ hour: string; drops: number }>(
     `

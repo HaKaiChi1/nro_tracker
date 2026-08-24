@@ -82,7 +82,7 @@ async function bootstrapIfEmpty(): Promise<void> {
     console.log(`[watch] [${server}] chưa có dữ liệu, đang tải toàn bộ lịch sử...`);
 
     const records = await crawlAll(
-      (page, total) => console.log(`  [${server}] trang ${page}/${total}`),
+      (page) => console.log(`  [${server}] trang ${page}`),
       server
     );
     const inserted = insertMany(records);

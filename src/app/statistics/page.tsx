@@ -15,8 +15,8 @@ import {
   playersByHourForDate,
   recentDates,
   summary,
-  topItems,
   topPlayers,
+  topPlayersByBestDay,
   topPlayersForDate,
 } from "@/lib/statistics";
 import { getSelectedServer } from "@/lib/server-selection";
@@ -27,7 +27,7 @@ export default async function StatisticsPage() {
   const server = await getSelectedServer();
   const stats = summary(server);
   const players = topPlayers(server, 10);
-  const items = topItems(server, 10);
+  const bestDayPlayers = topPlayersByBestDay(server, 45, 10);
   const hourly = hourlyDistribution(server);
   const daily = dailyDistribution(server).slice(-30);
   const days = recentDates(server, 4).map((date) => ({
@@ -68,8 +68,11 @@ export default async function StatisticsPage() {
           <TopPlayersChart players={players} />
         </ChartCard>
 
-        <ChartCard title="Top item xuất hiện nhiều nhất">
-          <HorizontalBarChart data={items.map((i) => ({ name: i.name, drops: i.drops }))} color="#10b981" />
+        <ChartCard title="Top người nhặt được nhiều đồ nhất trong 1 ngày (45 ngày gần nhất)">
+          <HorizontalBarChart
+            data={bestDayPlayers.map((p) => ({ name: p.name, drops: p.drops }))}
+            color="#10b981"
+          />
         </ChartCard>
 
         <ChartCard title="Phân bố theo giờ trong ngày">

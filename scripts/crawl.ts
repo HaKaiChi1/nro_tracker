@@ -9,8 +9,8 @@ async function main() {
   console.log(full ? "Crawling toàn bộ lịch sử..." : `Crawling bản ghi mới sau id=${start}...`);
 
   const records = full
-    ? await crawlAll((page, total) => console.log(`  trang ${page}/${total}`))
-    : await crawlNew(start, (page, total) => console.log(`  trang ${page}/${total}`));
+    ? await crawlAll((page) => console.log(`  trang ${page}`))
+    : await crawlNew(start, (page) => console.log(`  trang ${page}`));
 
   const inserted = insertMany(records);
 
