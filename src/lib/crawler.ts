@@ -5,41 +5,29 @@ import type { NotificationRow } from "./db";
 type ProgressCallback = (page: number, totalPages: number) => void;
 
 const HEADERS = {
-  accept: "text/x-component",
-  "content-type": "text/plain;charset=UTF-8",
-  "next-action": config.nextAction,
-  origin: new URL(config.baseUrl).origin,
-  referer: config.baseUrl,
+  accept: "application/json",
+  origin: new URL(config.pageUrl).origin,
+  referer: config.pageUrl,
 };
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function buildPayload(page: number, server: string) {
-  return [
-    {
-      page,
-      size: config.pageSize,
-      sort: "id,desc",
-      server,
-      category: "SYSTEM",
-      bossName: null,
-      bossNames: null,
-      equipmentName: null,
-      locationFilter: null,
-    },
-  ];
+function buildUrl(page: number, server: string): string {
+  const params = new URLSearchParams({
+    page: String(page),
+    size: String(config.pageSize),
+    sort: "id,desc",
+    server,
+    category: "SYSTEM",
+  });
+
+  return `${config.apiUrl}?${params.toString()}`;
 }
 
-function parseServerAction(text: string): { content: RawNotification[]; totalPages: number } {
-  const match = /1:(\{[\s\S]*\})$/.exec(text.trim());
-
-  if (!match) {
-    throw new Error("Cannot parse server response.");
-  }
-
-  const data = JSON.parse(match[1]);
+function parseApiResponse(text: string): { content: RawNotification[]; totalPages: number } {
+  const data = JSON.parse(text);
 
   return { content: data.content, totalPages: data.totalPages };
 }
@@ -64,11 +52,10 @@ export async function fetchPage(
   for (let attempt = 0; attempt < config.retryCount; attempt += 1) {
     try {
       const response = await fetchWithTimeout(
-        config.baseUrl,
+        buildUrl(page, server),
         {
-          method: "POST",
+          method: "GET",
           headers: HEADERS,
-          body: JSON.stringify(buildPayload(page, server)),
         },
         config.requestTimeoutMs
       );
@@ -78,7 +65,7 @@ export async function fetchPage(
       }
 
       const text = await response.text();
-      const { content, totalPages } = parseServerAction(text);
+      const { content, totalPages } = parseApiResponse(text);
 
       return { records: parseResponse(content), totalPages };
     } catch (error) {

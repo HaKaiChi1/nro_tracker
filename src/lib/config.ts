@@ -17,9 +17,8 @@ export const config = {
   pageSize: num(process.env.NRO_PAGE_SIZE, 10),
   requestTimeoutMs: num(process.env.NRO_REQUEST_TIMEOUT_MS, 10_000),
   retryCount: num(process.env.NRO_RETRY_COUNT, 3),
-  baseUrl: process.env.NRO_BASE_URL ?? "https://service.dungpham.com.vn/thong-bao",
-  nextAction:
-    process.env.NRO_NEXT_ACTION ?? "408aadffb9130a58e96f7d7f9333bc65c5c27ac0ce",
+  apiUrl: process.env.NRO_API_URL ?? "https://service.dungpham.com.vn/api/thong-bao",
+  pageUrl: process.env.NRO_PAGE_URL ?? "https://service.dungpham.com.vn/thong-bao",
   pollSeconds: num(process.env.NRO_POLL_SECONDS, 60),
   smtp: {
     host: process.env.SMTP_HOST ?? "",
@@ -31,5 +30,12 @@ export const config = {
   mail: {
     from: process.env.MAIL_FROM || process.env.SMTP_USER || "",
     to: process.env.MAIL_TO ?? "",
+  },
+  cleanup: {
+    // Người chơi có ngày đầu ghi nhận quá số ngày này VÀ không nằm trong top
+    // (topLimit) sẽ bị xoá sạch dữ liệu để database đỡ nặng.
+    inactiveDays: num(process.env.NRO_CLEANUP_INACTIVE_DAYS, 37),
+    topLimit: num(process.env.NRO_CLEANUP_TOP_LIMIT, 10),
+    intervalHours: num(process.env.NRO_CLEANUP_INTERVAL_HOURS, 24),
   },
 };

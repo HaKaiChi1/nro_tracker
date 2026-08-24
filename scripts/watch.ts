@@ -1,8 +1,39 @@
 import "dotenv/config";
 import { crawlAll, crawlNew } from "../src/lib/crawler";
-import { insertMany, latestId, listMailRules, setMeta, totalRecords } from "../src/lib/db";
+import {
+  getMeta,
+  insertMany,
+  latestId,
+  listMailRules,
+  purgeStalePlayers,
+  setMeta,
+  totalRecords,
+} from "../src/lib/db";
 import { sendRuleAlertEmail } from "../src/lib/mailer";
 import { config } from "../src/lib/config";
+
+const CLEANUP_META_KEY = "last_cleanup_at";
+
+// Chỉ thực sự dọn dữ liệu rác mỗi `cleanup.intervalHours` giờ, dù được gọi ở
+// mỗi tick — tránh quét toàn bộ bảng notifications liên tục.
+async function cleanupIfDue(): Promise<void> {
+  const last = getMeta(CLEANUP_META_KEY);
+  const intervalMs = config.cleanup.intervalHours * 60 * 60 * 1000;
+  if (last && Date.now() - new Date(last).getTime() < intervalMs) return;
+
+  for (const server of config.servers) {
+    const result = purgeStalePlayers(server);
+    if (result.removedPlayers > 0) {
+      console.log(
+        `[watch] [${server}] dọn dữ liệu rác: xoá ${result.removedPlayers} người chơi ` +
+          `(${result.removedRows} bản ghi) không hoạt động quá ${config.cleanup.inactiveDays} ` +
+          `ngày và không nằm trong top ${config.cleanup.topLimit}`
+      );
+    }
+  }
+
+  setMeta(CLEANUP_META_KEY, new Date().toISOString());
+}
 
 async function notifyMatchingRules(records: Awaited<ReturnType<typeof crawlNew>>): Promise<void> {
   const rules = listMailRules().filter((r) => r.enabled);
@@ -35,6 +66,12 @@ async function tick(): Promise<void> {
     } catch (error) {
       console.error(`[watch] [${server}] Lỗi khi crawl:`, error);
     }
+  }
+
+  try {
+    await cleanupIfDue();
+  } catch (error) {
+    console.error("[watch] Lỗi khi dọn dữ liệu rác:", error);
   }
 }
 

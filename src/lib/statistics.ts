@@ -44,13 +44,17 @@ export function summary(server: string = config.server): Summary {
   };
 }
 
+export interface NamedCountWithFirstDate extends NamedCount {
+  firstDate: string;
+}
+
 export function topPlayers(
   server: string = config.server,
   limit = 10
-): NamedCount[] {
-  return queryAll<NamedCount>(
+): NamedCountWithFirstDate[] {
+  return queryAll<NamedCountWithFirstDate>(
     `
-    SELECT player_name AS name, COUNT(*) AS drops
+    SELECT player_name AS name, COUNT(*) AS drops, MIN(substr(time, 1, 10)) AS firstDate
     FROM notifications
     WHERE server = ? AND player_name IS NOT NULL AND player_name <> ''
     GROUP BY player_name

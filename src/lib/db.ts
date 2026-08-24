@@ -2,6 +2,7 @@ import path from "node:path";
 import fs from "node:fs";
 import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 import { config } from "./config";
+import { daysSince } from "./date";
 
 export interface NotificationRow {
   id: number;
@@ -216,4 +217,75 @@ export function deleteMailRule(id: number): void {
 
 export function toggleMailRule(id: number): void {
   getDb().prepare(`UPDATE mail_rules SET enabled = 1 - enabled WHERE id = ?`).run(id);
+}
+
+export interface CleanupResult {
+  server: string;
+  removedPlayers: number;
+  removedRows: number;
+}
+
+// Xoá sạch dữ liệu của những người chơi đã xuất hiện quá `inactiveDays` ngày
+// (tính từ bản ghi đầu tiên) mà hiện không còn nằm trong top `topLimit` người
+// nhặt được nhiều đồ nhất — tức là dữ liệu không còn được hiển thị ở đâu, chỉ
+// làm nặng database.
+export function purgeStalePlayers(
+  server: string,
+  inactiveDays: number = config.cleanup.inactiveDays,
+  topLimit: number = config.cleanup.topLimit
+): CleanupResult {
+  const db = getDb();
+
+  const topNames = new Set(
+    (
+      db
+        .prepare(
+          `
+          SELECT player_name
+          FROM notifications
+          WHERE server = ? AND player_name IS NOT NULL AND player_name <> ''
+          GROUP BY player_name
+          ORDER BY COUNT(*) DESC
+          LIMIT ?
+          `
+        )
+        .all(server, topLimit) as { player_name: string }[]
+    ).map((r) => r.player_name)
+  );
+
+  const candidates = db
+    .prepare(
+      `
+      SELECT player_name, MIN(substr(time, 1, 10)) AS firstDate
+      FROM notifications
+      WHERE server = ? AND player_name IS NOT NULL AND player_name <> ''
+      GROUP BY player_name
+      `
+    )
+    .all(server) as { player_name: string; firstDate: string }[];
+
+  const staleNames = candidates
+    .filter((c) => !topNames.has(c.player_name) && daysSince(c.firstDate) > inactiveDays)
+    .map((c) => c.player_name);
+
+  if (staleNames.length === 0) {
+    return { server, removedPlayers: 0, removedRows: 0 };
+  }
+
+  const placeholders = staleNames.map(() => "?").join(", ");
+  let removedRows = 0;
+
+  db.exec("BEGIN");
+  try {
+    const result = db
+      .prepare(`DELETE FROM notifications WHERE server = ? AND player_name IN (${placeholders})`)
+      .run(server, ...staleNames);
+    removedRows = Number(result.changes);
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+
+  return { server, removedPlayers: staleNames.length, removedRows };
 }

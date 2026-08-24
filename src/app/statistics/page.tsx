@@ -6,6 +6,7 @@ import { ChartCard } from "@/components/ChartCard";
 import { HorizontalBarChart } from "@/components/charts/HorizontalBarChart";
 import { VerticalBarChart } from "@/components/charts/VerticalBarChart";
 import { DailyBreakdownCharts } from "@/components/charts/DailyBreakdownCharts";
+import { TopPlayersChart } from "@/components/charts/TopPlayersChart";
 import {
   dailyDistribution,
   dropTimesByPlayerForDate,
@@ -64,7 +65,7 @@ export default async function StatisticsPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <ChartCard title="Top người chơi nhặt được nhiều Set nhất">
-          <HorizontalBarChart data={players.map((p) => ({ name: p.name, drops: p.drops }))} />
+          <TopPlayersChart players={players} />
         </ChartCard>
 
         <ChartCard title="Top item xuất hiện nhiều nhất">

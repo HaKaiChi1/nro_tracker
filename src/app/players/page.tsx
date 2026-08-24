@@ -1,17 +1,10 @@
 import { playersForDate, recentDates } from "@/lib/statistics";
 import { getSelectedServer } from "@/lib/server-selection";
+import { daysSince } from "@/lib/date";
 import { DateSelect } from "@/components/DateSelect";
 import { PlayerDetailButton } from "@/components/PlayerDetailButton";
 
 export const dynamic = "force-dynamic";
-
-function daysSince(firstDate: string): number {
-  const [y, m, d] = firstDate.split("-").map(Number);
-  const first = Date.UTC(y, m - 1, d);
-  const now = new Date();
-  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-  return Math.max(1, Math.floor((today - first) / 86_400_000) + 1);
-}
 
 export default async function PlayersPage({
   searchParams,
