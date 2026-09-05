@@ -1,12 +1,12 @@
 {
-  "name": "nro-track-web",
+  "name": "nro-track-boss-web",
   "version": "1.0.0",
   "private": true,
-  "description": "Web dashboard thong ke thong bao Ngoc Rong Online (NRO Track)",
+  "description": "Web dashboard theo doi boss Tieu Doi Sat Thu (Ngoc Rong Online)",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3003",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 3003",
     "lint": "next lint",
     "crawl": "tsx scripts/crawl.ts",
     "watch": "tsx scripts/watch.ts"
@@ -15,14 +15,12 @@
     "dotenv": "^16.4.7",
     "next": "^15.1.6",
     "next-themes": "^0.4.4",
-    "nodemailer": "^6.9.16",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "recharts": "^2.15.0"
+    "recharts": "^2.15.4"
   },
   "devDependencies": {
     "@types/node": "^22.10.7",
-    "@types/nodemailer": "^6.4.17",
     "@types/react": "^19.0.7",
     "@types/react-dom": "^19.0.3",
     "autoprefixer": "^10.4.20",

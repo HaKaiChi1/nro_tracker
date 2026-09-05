@@ -1,12 +1,24 @@
 import Link from "next/link";
-import type { RecentFeed } from "@/lib/statistics";
+import { SQUAD_MEMBERS, SQUAD_LABELS, type SquadGroup } from "@/lib/statistics";
 import { buildPageWindow } from "@/lib/pagination";
 import { formatDateVi, timeAgoVi } from "@/lib/time";
 
-function SystemCard({ item }: { item: RecentFeed["rows"][number] }) {
+function SquadCard({ item }: { item: SquadGroup }) {
   return (
-    <div className="flex flex-col gap-1 px-4 py-3">
-      <p className="font-medium">{item.value}</p>
+    <div className="flex flex-col gap-2 px-4 py-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className="font-medium">
+          Tiểu Đội Sát Thủ vừa xuất hiện tại{" "}
+          <span className="text-indigo-600 dark:text-indigo-400">{item.location ?? "?"}</span>
+        </p>
+        <div className="flex shrink-0 gap-1">
+          {SQUAD_MEMBERS.map((name) => (
+            <span key={name} className={item.appeared[name] ? "boss-pip-on" : "boss-pip-off"}>
+              {SQUAD_LABELS[name]}
+            </span>
+          ))}
+        </div>
+      </div>
       <p className="text-xs text-slate-400">
         {formatDateVi(item.time)} · {timeAgoVi(item.time)}
       </p>
@@ -14,14 +26,14 @@ function SystemCard({ item }: { item: RecentFeed["rows"][number] }) {
   );
 }
 
-export function SystemFeedPanel({
+export function BossFeedPanel({
   items,
   total,
   page,
   pageSize,
   buildHref,
 }: {
-  items: RecentFeed["rows"];
+  items: SquadGroup[];
   total: number;
   page: number;
   pageSize: number;
@@ -33,13 +45,13 @@ export function SystemFeedPanel({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold">Thông báo Hệ thống</h2>
+        <h2 className="text-lg font-bold">Tiểu Đội Sát Thủ</h2>
         <span className="text-xs text-slate-400">Toàn bộ lịch sử đã thu thập</span>
       </div>
 
       <div className="card divide-y divide-slate-100 p-0 dark:divide-slate-800">
         {items.map((item) => (
-          <SystemCard key={item.id} item={item} />
+          <SquadCard key={item.id} item={item} />
         ))}
 
         {items.length === 0 && (
@@ -50,7 +62,7 @@ export function SystemFeedPanel({
       {totalPages > 1 && (
         <div className="flex flex-wrap items-center justify-center gap-1 text-sm">
           <span className="mr-3 text-xs text-slate-400">
-            Tổng cộng {total.toLocaleString("vi-VN")} bản ghi
+            Tổng cộng {total.toLocaleString("vi-VN")} đợt xuất hiện
           </span>
 
           <Link

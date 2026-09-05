@@ -1,10 +1,6 @@
-import type { NotificationRow } from "./db";
+import type { BossEventRow } from "./db";
 
-const PLAYER_PATTERN = /^(\S+)\s+vừa/i;
-const SET_PATTERN = /(Set\s+[A-Za-zÀ-ỹ0-9\s]+)/i;
-const SYSTEM_TAG_PATTERN = /^\[HT\]\s*/i;
-
-export interface RawNotification {
+export interface RawBossNotification {
   id: number;
   time: string;
   server?: string;
@@ -14,6 +10,14 @@ export interface RawNotification {
   bossName?: string;
   equipmentName?: string;
   isKilled?: boolean;
+  killedTime?: string;
+}
+
+const LOCATION_PATTERN = /tại\s+(.+)$/;
+
+export function extractLocation(value: string): string | null {
+  const match = LOCATION_PATTERN.exec(value);
+  return match ? match[1].trim() : null;
 }
 
 export function fixText(text: string | null | undefined): string {
@@ -30,45 +34,30 @@ export function fixText(text: string | null | undefined): string {
   return text;
 }
 
-export function stripSystemTag(text: string): string {
-  return text.replace(SYSTEM_TAG_PATTERN, "");
-}
-
-export function extractPlayer(value: string): string | null {
-  const match = PLAYER_PATTERN.exec(fixText(value));
-  return match ? match[1].trim() : null;
-}
-
-export function extractItem(value: string): string | null {
-  const match = SET_PATTERN.exec(fixText(value));
-  return match ? match[1].trim() : null;
-}
-
-export function parseNotification(item: RawNotification): NotificationRow {
-  const value = stripSystemTag(fixText(item.value));
+export function parseBossNotification(item: RawBossNotification): BossEventRow {
+  const value = fixText(item.value);
 
   return {
     id: item.id,
     time: item.time,
     server: fixText(item.server),
-    category: fixText(item.category),
-    value,
-    killer_name: fixText(item.killerName),
     boss_name: fixText(item.bossName),
-    equipment_name: fixText(item.equipmentName),
-    item_name: extractItem(value),
-    player_name: extractPlayer(value),
+    value,
+    location: extractLocation(value),
+    killer_name: item.killerName ? fixText(item.killerName) : null,
+    equipment_name: item.equipmentName ? fixText(item.equipmentName) : null,
     is_killed: item.isKilled ? 1 : 0,
+    killed_time: item.killedTime ?? null,
     crawl_time: new Date().toISOString().slice(0, 19).replace("T", " "),
   };
 }
 
-export function parseResponse(content: RawNotification[]): NotificationRow[] {
-  const results: NotificationRow[] = [];
+export function parseBossResponse(content: RawBossNotification[]): BossEventRow[] {
+  const results: BossEventRow[] = [];
 
   for (const item of content) {
     try {
-      results.push(parseNotification(item));
+      results.push(parseBossNotification(item));
     } catch {
       continue;
     }

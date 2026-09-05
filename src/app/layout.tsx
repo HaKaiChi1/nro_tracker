@@ -4,8 +4,8 @@ import { Nav } from "@/components/Nav";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "NRO Track — Thống kê thông báo Ngọc Rồng Online",
-  description: "Thu thập và thống kê thông báo drop/boss từ service.dungpham.com.vn",
+  title: "NRO Track Boss — Theo dõi Tiểu Đội Sát Thủ",
+  description: "Thu thập và theo dõi boss Tiểu Đội Sát Thủ từ service.dungpham.com.vn",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

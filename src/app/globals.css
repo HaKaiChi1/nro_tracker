@@ -37,3 +37,11 @@ body {
 .nav-link-active {
   @apply bg-indigo-50 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400;
 }
+
+.boss-pip-on {
+  @apply rounded-md bg-emerald-500 px-1.5 py-0.5 text-[11px] font-semibold text-white;
+}
+
+.boss-pip-off {
+  @apply rounded-md bg-slate-200 px-1.5 py-0.5 text-[11px] font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-500;
+}

@@ -1,17 +1,15 @@
 import { NextResponse } from "next/server";
-import { allRowsForExport } from "@/lib/statistics";
-import { toCsv } from "@/lib/csv";
-import { getSelectedServer } from "@/lib/server-selection";
+import { locationHistory } from "@/lib/statistics";
+import { locationHistoryToCsv } from "@/lib/csv";
 
 export async function GET() {
-  const server = await getSelectedServer();
-  const rows = allRowsForExport(server);
-  const csv = toCsv(rows);
+  const rows = locationHistory();
+  const csv = locationHistoryToCsv(rows);
 
   return new NextResponse(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="nro_notifications.csv"`,
+      "Content-Disposition": `attachment; filename="tieu_doi_sat_thu_dia_diem.csv"`,
     },
   });
 }

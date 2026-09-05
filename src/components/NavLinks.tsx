@@ -5,10 +5,8 @@ import { usePathname } from "next/navigation";
 
 const LINKS = [
   { href: "/", label: "Tổng quan" },
-  { href: "/statistics", label: "Thống kê" },
-  { href: "/search", label: "Tìm kiếm" },
-  { href: "/players", label: "Người nhặt đồ" },
-  { href: "/alerts", label: "Cảnh báo Email" },
+  { href: "/statistics", label: "Thống kê tổng" },
+  { href: "/prediction", label: "Dự đoán" },
 ];
 
 export function NavLinks() {

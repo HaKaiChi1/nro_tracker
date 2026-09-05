@@ -1,8 +1,8 @@
 import { config } from "./config";
-import { parseResponse, type RawNotification } from "./parser";
-import type { NotificationRow } from "./db";
+import { parseBossResponse, type RawBossNotification } from "./parser";
+import type { BossEventRow } from "./db";
 
-type ProgressCallback = (page: number) => void;
+type ProgressCallback = (bossName: string, page: number) => void;
 
 const HEADERS = {
   accept: "application/json",
@@ -18,21 +18,22 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function buildUrl(page: number, server: string): string {
+function buildUrl(page: number, server: string, bossName: string): string {
   const params = new URLSearchParams({
     page: String(page),
     size: String(config.pageSize),
     sort: "id,desc",
     server,
-    category: "SYSTEM",
+    category: config.category,
+    bossName,
   });
 
   return `${config.apiUrl}?${params.toString()}`;
 }
 
-function parseApiResponse(text: string): { content: RawNotification[]; isLast: boolean } {
+function parseApiResponse(text: string): { content: RawBossNotification[]; isLast: boolean } {
   const data = JSON.parse(text);
-  const content: RawNotification[] = data.content ?? [];
+  const content: RawBossNotification[] = data.content ?? [];
 
   // API trả về dạng Spring "Slice" (không có totalPages/totalElements), nên
   // phải dựa vào cờ `last` (hoặc trang rỗng) để biết khi nào dừng phân trang.
@@ -52,14 +53,15 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
 
 export async function fetchPage(
   page: number,
-  server: string = config.server
-): Promise<{ records: NotificationRow[]; isLast: boolean }> {
+  server: string,
+  bossName: string
+): Promise<{ records: BossEventRow[]; isLast: boolean }> {
   let lastError: unknown;
 
   for (let attempt = 0; attempt < config.retryCount; attempt += 1) {
     try {
       const response = await fetchWithTimeout(
-        buildUrl(page, server),
+        buildUrl(page, server, bossName),
         {
           method: "GET",
           headers: HEADERS,
@@ -74,7 +76,7 @@ export async function fetchPage(
       const text = await response.text();
       const { content, isLast } = parseApiResponse(text);
 
-      return { records: parseResponse(content), isLast };
+      return { records: parseBossResponse(content), isLast };
     } catch (error) {
       lastError = error;
       await sleep(1000);
@@ -84,37 +86,39 @@ export async function fetchPage(
   throw lastError;
 }
 
-export async function crawlAll(
-  onProgress?: ProgressCallback,
-  server: string = config.server
-): Promise<NotificationRow[]> {
+async function crawlAllForBoss(
+  bossName: string,
+  server: string,
+  onProgress?: ProgressCallback
+): Promise<BossEventRow[]> {
   let page = 0;
   let isLast = false;
-  const all: NotificationRow[] = [];
+  const all: BossEventRow[] = [];
 
   while (!isLast && page < MAX_PAGES_PER_CRAWL) {
-    const { records, isLast: last } = await fetchPage(page, server);
+    const { records, isLast: last } = await fetchPage(page, server, bossName);
     isLast = last;
     all.push(...records);
-    onProgress?.(page + 1);
+    onProgress?.(bossName, page + 1);
     page += 1;
   }
 
   return all;
 }
 
-export async function crawlNew(
+async function crawlNewForBoss(
+  bossName: string,
   latestId: number,
-  onProgress?: ProgressCallback,
-  server: string = config.server
-): Promise<NotificationRow[]> {
+  server: string,
+  onProgress?: ProgressCallback
+): Promise<BossEventRow[]> {
   let page = 0;
   let isLast = false;
   let stop = false;
-  const fresh: NotificationRow[] = [];
+  const fresh: BossEventRow[] = [];
 
   while (!isLast && !stop && page < MAX_PAGES_PER_CRAWL) {
-    const { records, isLast: last } = await fetchPage(page, server);
+    const { records, isLast: last } = await fetchPage(page, server, bossName);
     isLast = last;
 
     for (const record of records) {
@@ -125,8 +129,35 @@ export async function crawlNew(
       fresh.push(record);
     }
 
-    onProgress?.(page + 1);
+    onProgress?.(bossName, page + 1);
     page += 1;
+  }
+
+  return fresh;
+}
+
+export async function crawlAll(
+  onProgress?: ProgressCallback,
+  server: string = config.server
+): Promise<BossEventRow[]> {
+  const all: BossEventRow[] = [];
+
+  for (const bossName of config.bossNames) {
+    all.push(...(await crawlAllForBoss(bossName, server, onProgress)));
+  }
+
+  return all;
+}
+
+export async function crawlNew(
+  latestId: number,
+  onProgress?: ProgressCallback,
+  server: string = config.server
+): Promise<BossEventRow[]> {
+  const fresh: BossEventRow[] = [];
+
+  for (const bossName of config.bossNames) {
+    fresh.push(...(await crawlNewForBoss(bossName, latestId, server, onProgress)));
   }
 
   return fresh;

@@ -1,19 +1,4 @@
-import type { NotificationRow } from "./db";
-
-const COLUMNS: (keyof NotificationRow)[] = [
-  "id",
-  "time",
-  "server",
-  "category",
-  "value",
-  "player_name",
-  "killer_name",
-  "boss_name",
-  "equipment_name",
-  "item_name",
-  "is_killed",
-  "crawl_time",
-];
+import type { LocationHistoryEntry } from "./statistics";
 
 function escapeCell(value: unknown): string {
   const text = value == null ? "" : String(value);
@@ -23,8 +8,17 @@ function escapeCell(value: unknown): string {
   return text;
 }
 
-export function toCsv(rows: NotificationRow[]): string {
-  const header = COLUMNS.join(",");
-  const lines = rows.map((row) => COLUMNS.map((col) => escapeCell(row[col])).join(","));
+// "YYYY-MM-DD HH:MM:SS" -> "DD/MM/YYYY HH:MM:SS"
+function formatCsvTime(time: string): string {
+  const [datePart, timePart] = time.split(" ");
+  const [y, m, d] = (datePart ?? "").split("-");
+  return `${d}/${m}/${y} ${timePart ?? ""}`;
+}
+
+export function locationHistoryToCsv(rows: LocationHistoryEntry[]): string {
+  const header = "STT,Thời gian,Địa điểm";
+  const lines = rows.map(
+    (row) => `${row.stt},${escapeCell(formatCsvTime(row.time))},${escapeCell(row.location)}`
+  );
   return ["﻿" + header, ...lines].join("\n");
 }

@@ -1,29 +1,27 @@
 "use client";
 
 import type { ReactNode } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { EmptyState } from "./VerticalBarChart";
 
-const COLORS = ["#6366f1", "#818cf8", "#a5b4fc", "#c7d2fe"];
-
-export function HorizontalBarChart({
+export function HorizontalBarChart<T extends { name: string; value: number }>({
   data,
+  yLabel = "giá trị",
   color = "#6366f1",
-  height = 320,
+  colors,
+  height = 260,
+  width = 110,
+  formatValue,
   tooltipExtra,
 }: {
-  data: { name: string; drops: number }[];
+  data: T[];
+  yLabel?: string;
   color?: string;
+  colors?: string[];
   height?: number;
-  tooltipExtra?: (item: { name: string; drops: number }) => ReactNode;
+  width?: number;
+  formatValue?: (value: number) => string;
+  tooltipExtra?: (item: T) => ReactNode;
 }) {
   if (data.length === 0) {
     return <EmptyState />;
@@ -39,36 +37,28 @@ export function HorizontalBarChart({
           dataKey="name"
           stroke="#94a3b8"
           fontSize={12}
-          width={110}
+          width={width}
           tick={{ fill: "currentColor" }}
         />
         <Tooltip
           content={({ active, payload }) => {
             if (!active || !payload || payload.length === 0) return null;
-            const item = payload[0].payload as { name: string; drops: number };
+            const item = payload[0].payload as T;
             return (
               <div className="max-h-64 max-w-xs overflow-y-auto rounded-lg bg-slate-800 px-3 py-2 text-xs text-white shadow-lg">
                 <div className="font-medium">{item.name}</div>
-                <div className="text-slate-300">drops : {item.drops}</div>
+                <div className="text-slate-300">
+                  {yLabel} : {formatValue ? formatValue(item.value) : item.value}
+                </div>
                 {tooltipExtra?.(item)}
               </div>
             );
           }}
         />
-        <Bar dataKey="drops" radius={[0, 4, 4, 0]}>
-          {data.map((_, i) => (
-            <Cell key={i} fill={COLORS[i % COLORS.length] ?? color} />
-          ))}
+        <Bar dataKey="value" radius={[0, 4, 4, 0]} fill={color}>
+          {colors && data.map((_, i) => <Cell key={i} fill={colors[i] ?? color} />)}
         </Bar>
       </BarChart>
     </ResponsiveContainer>
-  );
-}
-
-export function EmptyState() {
-  return (
-    <div className="flex h-64 items-center justify-center text-sm text-slate-400">
-      Chưa có dữ liệu
-    </div>
   );
 }
